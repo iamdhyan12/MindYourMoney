@@ -6,6 +6,9 @@ android {
     namespace = "edu.northeastern.mindyourmoney"
     compileSdk = 35
 
+    buildFeatures{
+        viewBinding=true
+    }
     defaultConfig {
         applicationId = "edu.northeastern.mindyourmoney"
         minSdk = 27
