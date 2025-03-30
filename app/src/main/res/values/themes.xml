@@ -8,5 +8,9 @@
     <style name="Theme.MindYourMoney" parent="Base.Theme.MindYourMoney" />
     <style name="indicator" parent="Widget.Material3.BottomNavigationView.ActiveIndicator">
         <item name="android:color">@color/blue</item>
+        <item name="colorPrimary">@color/primary_color</item>
+        <item name="colorPrimaryVariant">@color/primary_dark</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="android:windowLightStatusBar">true</item>
     </style>
 </resources>
