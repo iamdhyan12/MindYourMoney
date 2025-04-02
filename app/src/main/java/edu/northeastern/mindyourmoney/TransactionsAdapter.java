@@ -1,5 +1,6 @@
 package edu.northeastern.mindyourmoney;
 
+
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -9,6 +10,9 @@ import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -23,10 +27,13 @@ public class TransactionsAdapter  extends  RecyclerView.Adapter<TransactionsAdap
     RowTransactionBinding binding;
     ArrayList<Transaction> transactions;
 
+    private OnTransactionDeletedListener transactionDeletedListener;
 
-    public TransactionsAdapter(Context context, ArrayList<Transaction> transactions) {
+    private DatabaseReference mindYourMoneyRef;
+    public TransactionsAdapter(Context context, ArrayList<Transaction> transactions, OnTransactionDeletedListener transactionDeletedListener) {
         this.context = context;
         this.transactions = transactions;
+        this.transactionDeletedListener = transactionDeletedListener;
     }
 
     @NonNull
@@ -42,7 +49,7 @@ public class TransactionsAdapter  extends  RecyclerView.Adapter<TransactionsAdap
         holder.binding.transactionAmount.setText(String.valueOf(transaction.getAmount()));
         holder.binding.transactionCategory.setText(transaction.getAccount());
         SimpleDateFormat format = new SimpleDateFormat("MMMM dd, YYYY");
-        holder.binding.transactionDate.setText(format.format(transaction.getDate()));
+        holder.binding.transactionDate.setText(transaction.getDate());
         holder.binding.category.setText(transaction.getCategory());
 
         Category transactionCategory = Constants.getCategoryDetails(transaction.getCategory());
@@ -53,23 +60,31 @@ public class TransactionsAdapter  extends  RecyclerView.Adapter<TransactionsAdap
         holder.binding.transactionCategory.setBackgroundTintList(context.getColorStateList(Constants.getAccountsColor(transaction.getAccount())));
 
 
-//        holder.itemView.setOnLongClickListener(new View.OnLongClickListener() {
-//            @Override
-//            public boolean onLongClick(View view) {
-//                AlertDialog deleteDialog = new AlertDialog.Builder(context).create();
-//                deleteDialog.setTitle("Delete Transaction");
-//                deleteDialog.setMessage("Are you sure to delete this transaction?");
-//                deleteDialog.setButton(DialogInterface.BUTTON_POSITIVE, "Yes", (dialogInterface, i) -> {
-//                    ((MainActivity)context).viewModel.deleteTransaction(transaction);
-//                });
-//                deleteDialog.setButton(DialogInterface.BUTTON_NEGATIVE, "No", (dialogInterface, i) -> {
-//                    deleteDialog.dismiss();
-//                });
-//                deleteDialog.show();
-//                return false;
-//            }
-//        });
+        holder.itemView.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View view) {
+                AlertDialog deleteDialog = new AlertDialog.Builder(context).create();
+                deleteDialog.setTitle("Delete Transaction");
+                deleteDialog.setMessage("Are you sure to delete this transaction?");
+                deleteDialog.setButton(DialogInterface.BUTTON_POSITIVE, "Yes", (dialogInterface, i) -> {
+                    deleteTransaction(transaction);
 
+                });
+                deleteDialog.setButton(DialogInterface.BUTTON_NEGATIVE, "No", (dialogInterface, i) -> {
+                    deleteDialog.dismiss();
+                });
+                deleteDialog.show();
+                return false;
+            }
+        });
+
+    }
+
+
+    public void deleteTransaction(Transaction transaction){
+        mindYourMoneyRef = FirebaseDatabase.getInstance().getReference("transactionHistory");
+        mindYourMoneyRef.child(transaction.getId()).removeValue();
+        transactionDeletedListener.onTransactionDeleted();
     }
 
     @Override
@@ -85,5 +100,10 @@ public class TransactionsAdapter  extends  RecyclerView.Adapter<TransactionsAdap
             super(itemView);
             binding = RowTransactionBinding.bind(itemView);
         }
+    }
+
+
+    public interface OnTransactionDeletedListener {
+        void onTransactionDeleted();
     }
 }

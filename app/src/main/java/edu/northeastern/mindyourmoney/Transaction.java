@@ -1,24 +1,39 @@
 package edu.northeastern.mindyourmoney;
 
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 
 public class Transaction {
+
+    private String id;
+
     private String  category, account, note;
-    private Date date;
+    private String date;
     private double amount;
 
+    private String monthYear, year;
 
-    public Transaction() {
+    public Transaction(){
+
     }
 
-    public Transaction(String category, String account, String note, Date date, double amount, long id) {
+    public Transaction(String id,String category, String account, String note, String date,
+                       String monthYear,String year, double amount) {
+        this.id = id;
         this.category = category;
         this.account = account;
         this.note = note;
         this.date = date;
+        this.monthYear = monthYear;
+        this.year = year;
         this.amount = amount;
     }
+
+    public String getId() {
+        return id;
+    }
+
     public String getCategory() {
         return category;
     }
@@ -43,19 +58,34 @@ public class Transaction {
         this.note = note;
     }
 
-    public Date getDate() {
+    public String getDate() {
         return date;
     }
 
-    public void setDate(Date date) {
-        this.date = date;
+    public String getMonthYear() {
+        return monthYear;
+    }
+
+    public String getYear() {
+        return year;
     }
 
     public double getAmount() {
         return amount;
     }
 
-    public void setAmount(double amount) {
-        this.amount = amount;
+
+    @Override
+    public String toString() {
+        return "Transaction{" +
+                "id='" + id + '\'' +
+                ", category='" + category + '\'' +
+                ", account='" + account + '\'' +
+                ", note='" + note + '\'' +
+                ", date='" + date + '\'' +
+                ", amount=" + amount +
+                ", monthYear='" + monthYear + '\'' +
+                ", year='" + year + '\'' +
+                '}';
     }
 }

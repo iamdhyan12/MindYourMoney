@@ -91,4 +91,16 @@
         app:layout_constraintTop_toBottomOf="@+id/tabLayout"
         tools:listitem="@layout/row_transaction" />
 
+    <ImageView
+        android:id="@+id/emptyState"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:alpha="0.5"
+        android:visibility="gone"
+        app:layout_constraintBottom_toTopOf="@+id/bottomNavigation"
+        app:layout_constraintEnd_toEndOf="@+id/transactionList"
+        app:layout_constraintStart_toStartOf="@+id/transactionList"
+        app:layout_constraintTop_toBottomOf="@+id/tabLayout"
+        app:srcCompat="@drawable/ic_launcher_foreground" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>
