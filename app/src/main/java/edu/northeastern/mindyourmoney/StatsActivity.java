@@ -2,28 +2,20 @@ package edu.northeastern.mindyourmoney;
 
 import static edu.northeastern.mindyourmoney.Constants.setCategories;
 
-import android.content.Intent;
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.MenuItem;
 import android.view.View;
-import android.widget.Toast;
 
-import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.fragment.app.FragmentTransaction;
-import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.anychart.AnyChart;
-import com.anychart.AnyChartView;
 import com.anychart.chart.common.dataentry.DataEntry;
 import com.anychart.chart.common.dataentry.ValueDataEntry;
 import com.anychart.charts.Pie;
 import com.anychart.enums.Align;
 import com.anychart.enums.LegendLayout;
-import com.google.android.material.navigation.NavigationBarView;
-import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.tabs.TabLayout;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -39,142 +31,160 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-import edu.northeastern.mindyourmoney.databinding.ActivityMainBinding;
 import edu.northeastern.mindyourmoney.databinding.ActivityStatsBinding;
 
 public class StatsActivity extends AppCompatActivity {
 
     ActivityStatsBinding binding;
-    Pie pie;
     Calendar calendar;
     int selectedTab = 0;
-
-    int selectedType = 0;
+    int selectedType = 0; // 0 for category, 1 for payment mode
     String currentDisplayDate;
     private DatabaseReference mindYourMoneyRef;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        EdgeToEdge.enable(this);
         binding = ActivityStatsBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+
         mindYourMoneyRef = FirebaseDatabase.getInstance().getReference("transactionHistory");
         calendar = Calendar.getInstance();
-        currentDisplayDate = updateDate();
         setCategories();
+
+        // Initialize the selected type and tab
+        selectedType = 0; // Default to category view
+        selectedTab = 0;  // Default to daily view
+
+        // Set UI state for the category button as selected
+        updateButtonState();
+
         binding.bottomNavigation.setSelectedItemId(R.id.stats);
 
-        binding.nextButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if(selectedTab==0) {
-                    calendar.add(Calendar.DATE, 1);
-                }else if(selectedTab==1){
-                    calendar.add(Calendar.MONTH,1);
-                }else if(selectedTab==2){
-                    calendar.add(Calendar.YEAR,1);
-                }
-                currentDisplayDate = updateDate();
+        // Initialize date and fetch data
+        currentDisplayDate = updateDate();
 
+        // Set up navigation buttons
+        binding.nextButton.setOnClickListener(view -> {
+            if (selectedTab == 0) {
+                calendar.add(Calendar.DATE, 1);
+            } else if (selectedTab == 1) {
+                calendar.add(Calendar.MONTH, 1);
+            } else {
+                calendar.add(Calendar.YEAR, 1);
             }
+            currentDisplayDate = updateDate();
         });
 
+        binding.prevButton.setOnClickListener(view -> {
+            if (selectedTab == 0) {
+                calendar.add(Calendar.DATE, -1);
+            } else if (selectedTab == 1) {
+                calendar.add(Calendar.MONTH, -1);
+            } else {
+                calendar.add(Calendar.YEAR, -1);
+            }
+            currentDisplayDate = updateDate();
+        });
 
-        binding.category.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
+        // Set up type selection buttons
+        binding.category.setOnClickListener(view -> {
+            if (selectedType != 0) {
                 selectedType = 0;
-                updateDate();
+                updateButtonState();
+                fetchTransactionsForDate(currentDisplayDate);
             }
         });
 
-        binding.mode.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
+        binding.mode.setOnClickListener(view -> {
+            if (selectedType != 1) {
                 selectedType = 1;
-                updateDate();
+                updateButtonState();
+                fetchTransactionsForDate(currentDisplayDate);
             }
         });
 
-        binding.prevButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if(selectedTab==0) {
-                    calendar.add(Calendar.DATE, -1);
-                }else if(selectedTab==1){
-                    calendar.add(Calendar.MONTH,-1);
-                }else if(selectedTab==2){
-                    calendar.add(Calendar.YEAR,-1);
-                }
-                currentDisplayDate = updateDate();
-            }
-        });
-        binding.bottomNavigation.setOnItemSelectedListener(new NavigationBarView.OnItemSelectedListener() {
-            @Override
-            public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-                FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-                if(item.getItemId() == R.id.addexpense){
-                    new AddTransactionFragment().show(getSupportFragmentManager(),null);
-                }else if(item.getItemId() == R.id.stats){
-                    return true;
-                }
+        binding.bottomNavigation.setOnItemSelectedListener(item -> {
+            if (item.getItemId() == R.id.addexpense) {
+                new AddTransactionFragment().show(getSupportFragmentManager(), null);
+            } else if (item.getItemId() == R.id.stats) {
                 return true;
             }
+            return true;
         });
-        fetchTransactionsForDate(currentDisplayDate);
+
         binding.tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
-                if(tab.getText().equals("Monthly")){
+                if (tab.getText().equals("Monthly")) {
                     selectedTab = 1;
                 } else if (tab.getText().equals("Daily")) {
                     selectedTab = 0;
-                }else {
+                } else {
                     selectedTab = 2;
                 }
                 updateDate();
             }
 
-            @Override
-            public void onTabUnselected(TabLayout.Tab tab) {
-
-            }
-
-            @Override
-            public void onTabReselected(TabLayout.Tab tab) {
-
-            }
+            @Override public void onTabUnselected(TabLayout.Tab tab) {}
+            @Override public void onTabReselected(TabLayout.Tab tab) {}
         });
     }
 
-    String updateDate(){
-        SimpleDateFormat simpleDateFormat;
-        if(selectedTab==2) {
-            simpleDateFormat = new SimpleDateFormat("YYYY");
-        }else if(selectedTab==1){
-            simpleDateFormat = new SimpleDateFormat("MMMM, YYYY");
-        }else{
-            simpleDateFormat = new SimpleDateFormat("MMMM dd, YYYY");
-        }
-        binding.currentDate.setText(simpleDateFormat.format(calendar.getTime()));
-        fetchTransactionsForDate(simpleDateFormat.format(calendar.getTime()));
-        return simpleDateFormat.format(calendar.getTime());
+    @Override
+    public void onConfigurationChanged(@NonNull Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        // Refresh the chart when orientation changes
+        binding.anyChart.clear();
+        fetchTransactionsForDate(currentDisplayDate);
     }
+
+    // Update button UI state based on selection
+    private void updateButtonState() {
+        if (selectedType == 0) {
+            binding.category.setBackgroundColor(getResources().getColor(R.color.blue));
+            binding.category.setTextColor(getResources().getColor(R.color.white));
+            binding.mode.setBackgroundColor(getResources().getColor(android.R.color.transparent));
+            binding.mode.setTextColor(getResources().getColor(R.color.blue));
+        } else {
+            binding.mode.setBackgroundColor(getResources().getColor(R.color.blue));
+            binding.mode.setTextColor(getResources().getColor(R.color.white));
+            binding.category.setBackgroundColor(getResources().getColor(android.R.color.transparent));
+            binding.category.setTextColor(getResources().getColor(R.color.blue));
+        }
+    }
+
+    String updateDate() {
+        SimpleDateFormat simpleDateFormat;
+        if (selectedTab == 2) {
+            simpleDateFormat = new SimpleDateFormat("yyyy", Locale.getDefault());
+        } else if (selectedTab == 1) {
+            simpleDateFormat = new SimpleDateFormat("MMMM, yyyy", Locale.getDefault());
+        } else {
+            simpleDateFormat = new SimpleDateFormat("MMMM dd, yyyy", Locale.getDefault());
+        }
+
+        String formattedDate = simpleDateFormat.format(calendar.getTime());
+        binding.currentDate.setText(formattedDate);
+        fetchTransactionsForDate(formattedDate);
+        return formattedDate;
+    }
+
     private void fetchTransactionsForDate(String selectedDate) {
-        String path = "";
-        if(selectedTab == 0){
+        String path;
+        if (selectedTab == 0) {
             path = "date";
-        }else if(selectedTab == 1){
+        } else if (selectedTab == 1) {
             path = "monthYear";
-        }else if(selectedTab==2){
+        } else {
             path = "year";
         }
+
         mindYourMoneyRef.orderByChild(path).equalTo(selectedDate)
                 .addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot snapshot) {
-                        ArrayList<Transaction> transactions = new ArrayList<>();
+                        List<Transaction> transactions = new ArrayList<>();
 
                         for (DataSnapshot transactionSnapshot : snapshot.getChildren()) {
                             Transaction transaction = transactionSnapshot.getValue(Transaction.class);
@@ -182,14 +192,10 @@ public class StatsActivity extends AppCompatActivity {
                                 transactions.add(transaction);
                             }
                         }
-                        if (transactions.isEmpty()) {
 
+                        if (transactions.isEmpty()) {
                             binding.emptyState.setVisibility(View.VISIBLE);
                             binding.anyChart.setVisibility(View.GONE);
-
-                            if (pie != null) {
-                                pie.data(new ArrayList<>());
-                            }
                         } else {
                             binding.emptyState.setVisibility(View.GONE);
                             binding.anyChart.setVisibility(View.VISIBLE);
@@ -199,74 +205,100 @@ public class StatsActivity extends AppCompatActivity {
 
                     @Override
                     public void onCancelled(@NonNull DatabaseError error) {
-                        Log.e("MainActivity", "Failed to read data", error.toException());
+                        Log.e("StatsActivity", "Failed to read data", error.toException());
                     }
                 });
     }
 
-
     private void updatePieChart(List<Transaction> transactions) {
+        // Clear any existing chart first
         binding.anyChart.clear();
-        if(selectedType == 0) {
-            displayByCategory(transactions);
-        }else if(selectedType == 1){
-            displayByMode(transactions);
+
+        // Create a new pie chart
+        Pie pie = AnyChart.pie();
+
+        // Set up the chart based on selected type
+        if (selectedType == 0) {
+            setupCategoryChart(pie, transactions);
+        } else {
+            setupPaymentModeChart(pie, transactions);
         }
 
+        // Apply the chart to the view
+        binding.anyChart.setChart(pie);
     }
 
-    private void displayByCategory(List<Transaction> transactions) {
-        binding.anyChart.clear();
+    private void setupCategoryChart(Pie pie, List<Transaction> transactions) {
         Map<String, Float> categoryTotals = new HashMap<>();
+
         for (Transaction t : transactions) {
             String category = t.getCategory();
             float amount = (float) t.getAmount();
             categoryTotals.put(category, categoryTotals.getOrDefault(category, 0f) + amount);
         }
+
         List<DataEntry> dataEntries = new ArrayList<>();
         for (Map.Entry<String, Float> entry : categoryTotals.entrySet()) {
             dataEntries.add(new ValueDataEntry(entry.getKey(), entry.getValue()));
         }
 
-        if (pie == null) {
-            pie = AnyChart.pie();
-        }
+        pie.title("Expenses by Category");
+        pie.labels().position("outside");
 
-        pie.title("Expenses by Category");  // Ensure the title updates
+        // Configure legend
         pie.legend().title().enabled(true);
         pie.legend().title().text("Categories").padding(0d, 0d, 10d, 0d);
-        pie.legend().position("center-bottom").itemsLayout(LegendLayout.HORIZONTAL).align(Align.CENTER);
 
+        // Adjust legend position based on orientation
+        int orientation = getResources().getConfiguration().orientation;
+        if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            pie.legend().position("right");
+            pie.legend().itemsLayout(LegendLayout.VERTICAL);
+        } else {
+            pie.legend().position("center-bottom");
+            pie.legend().itemsLayout(LegendLayout.HORIZONTAL);
+        }
+
+        pie.legend().align(Align.CENTER);
+
+        // Set the data
         pie.data(dataEntries);
-        binding.anyChart.setChart(pie);
     }
 
-    private void displayByMode(List<Transaction> transactions) {
-        binding.anyChart.clear();
-        Map<String, Float> categoryTotals = new HashMap<>();
+    private void setupPaymentModeChart(Pie pie, List<Transaction> transactions) {
+        Map<String, Float> modeTotals = new HashMap<>();
+
         for (Transaction t : transactions) {
-            String category = t.getAccount();
+            String mode = t.getAccount();
             float amount = (float) t.getAmount();
-            categoryTotals.put(category, categoryTotals.getOrDefault(category, 0f) + amount);
+            modeTotals.put(mode, modeTotals.getOrDefault(mode, 0f) + amount);
         }
+
         List<DataEntry> dataEntries = new ArrayList<>();
-        for (Map.Entry<String, Float> entry : categoryTotals.entrySet()) {
+        for (Map.Entry<String, Float> entry : modeTotals.entrySet()) {
             dataEntries.add(new ValueDataEntry(entry.getKey(), entry.getValue()));
         }
 
-        if (pie == null) {
-            pie = AnyChart.pie();
-        }
+        pie.title("Expenses by Payment Mode");
+        pie.labels().position("outside");
 
-        pie.title("Expenses by Payment Mode");  // Ensure the title updates
+        // Configure legend
         pie.legend().title().enabled(true);
         pie.legend().title().text("Payment Mode").padding(0d, 0d, 10d, 0d);
-        pie.legend().position("center-bottom").itemsLayout(LegendLayout.HORIZONTAL).align(Align.CENTER);
 
+        // Adjust legend position based on orientation
+        int orientation = getResources().getConfiguration().orientation;
+        if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            pie.legend().position("right");
+            pie.legend().itemsLayout(LegendLayout.VERTICAL);
+        } else {
+            pie.legend().position("center-bottom");
+            pie.legend().itemsLayout(LegendLayout.HORIZONTAL);
+        }
+
+        pie.legend().align(Align.CENTER);
+
+        // Set the data
         pie.data(dataEntries);
-        binding.anyChart.setChart(pie);
     }
-
-
-
 }
