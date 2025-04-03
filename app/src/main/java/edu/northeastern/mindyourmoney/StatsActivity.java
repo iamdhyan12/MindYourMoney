@@ -1,21 +1,14 @@
 package edu.northeastern.mindyourmoney;
 
-import static edu.northeastern.mindyourmoney.Constants.setCategories;
-
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.webkit.WebView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.anychart.AnyChart;
-import com.anychart.chart.common.dataentry.DataEntry;
-import com.anychart.chart.common.dataentry.ValueDataEntry;
-import com.anychart.charts.Pie;
-import com.anychart.enums.Align;
-import com.anychart.enums.LegendLayout;
 import com.google.android.material.tabs.TabLayout;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -41,6 +34,7 @@ public class StatsActivity extends AppCompatActivity {
     int selectedType = 0; // 0 for category, 1 for payment mode
     String currentDisplayDate;
     private DatabaseReference mindYourMoneyRef;
+    private WebView chartWebView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,44 +44,51 @@ public class StatsActivity extends AppCompatActivity {
 
         mindYourMoneyRef = FirebaseDatabase.getInstance().getReference("transactionHistory");
         calendar = Calendar.getInstance();
-        setCategories();
 
-        // Initialize the selected type and tab
-        selectedType = 0; // Default to category view
-        selectedTab = 0;  // Default to daily view
+        // Initialize WebView
+        chartWebView = binding.chartWebView;
+        chartWebView.getSettings().setJavaScriptEnabled(true);
 
-        // Set UI state for the category button as selected
+        // Initialize UI state
+        selectedType = 0;
+        selectedTab = 0;
         updateButtonState();
 
         binding.bottomNavigation.setSelectedItemId(R.id.stats);
-
-        // Initialize date and fetch data
         currentDisplayDate = updateDate();
 
-        // Set up navigation buttons
+        setupNavigationButtons();
+        setupTypeSelection();
+        setupTabLayout();
+    }
+
+    private void setupNavigationButtons() {
         binding.nextButton.setOnClickListener(view -> {
-            if (selectedTab == 0) {
-                calendar.add(Calendar.DATE, 1);
-            } else if (selectedTab == 1) {
-                calendar.add(Calendar.MONTH, 1);
-            } else {
-                calendar.add(Calendar.YEAR, 1);
-            }
+            adjustDate(1);
             currentDisplayDate = updateDate();
         });
 
         binding.prevButton.setOnClickListener(view -> {
-            if (selectedTab == 0) {
-                calendar.add(Calendar.DATE, -1);
-            } else if (selectedTab == 1) {
-                calendar.add(Calendar.MONTH, -1);
-            } else {
-                calendar.add(Calendar.YEAR, -1);
-            }
+            adjustDate(-1);
             currentDisplayDate = updateDate();
         });
+    }
 
-        // Set up type selection buttons
+    private void adjustDate(int amount) {
+        switch (selectedTab) {
+            case 0:
+                calendar.add(Calendar.DATE, amount);
+                break;
+            case 1:
+                calendar.add(Calendar.MONTH, amount);
+                break;
+            case 2:
+                calendar.add(Calendar.YEAR, amount);
+                break;
+        }
+    }
+
+    private void setupTypeSelection() {
         binding.category.setOnClickListener(view -> {
             if (selectedType != 0) {
                 selectedType = 0;
@@ -107,23 +108,19 @@ public class StatsActivity extends AppCompatActivity {
         binding.bottomNavigation.setOnItemSelectedListener(item -> {
             if (item.getItemId() == R.id.addexpense) {
                 new AddTransactionFragment().show(getSupportFragmentManager(), null);
-            } else if (item.getItemId() == R.id.stats) {
-                return true;
+            } else if (item.getItemId() == R.id.transaction){
+                finish();
             }
             return true;
         });
+    }
 
+    private void setupTabLayout() {
         binding.tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
-                if (tab.getText().equals("Monthly")) {
-                    selectedTab = 1;
-                } else if (tab.getText().equals("Daily")) {
-                    selectedTab = 0;
-                } else {
-                    selectedTab = 2;
-                }
-                updateDate();
+                selectedTab = tab.getPosition();
+                currentDisplayDate = updateDate();
             }
 
             @Override public void onTabUnselected(TabLayout.Tab tab) {}
@@ -134,171 +131,153 @@ public class StatsActivity extends AppCompatActivity {
     @Override
     public void onConfigurationChanged(@NonNull Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
-        // Refresh the chart when orientation changes
-        binding.anyChart.clear();
         fetchTransactionsForDate(currentDisplayDate);
     }
 
-    // Update button UI state based on selection
     private void updateButtonState() {
-        if (selectedType == 0) {
-            binding.category.setBackgroundColor(getResources().getColor(R.color.blue));
-            binding.category.setTextColor(getResources().getColor(R.color.white));
-            binding.mode.setBackgroundColor(getResources().getColor(android.R.color.transparent));
-            binding.mode.setTextColor(getResources().getColor(R.color.blue));
-        } else {
-            binding.mode.setBackgroundColor(getResources().getColor(R.color.blue));
-            binding.mode.setTextColor(getResources().getColor(R.color.white));
-            binding.category.setBackgroundColor(getResources().getColor(android.R.color.transparent));
-            binding.category.setTextColor(getResources().getColor(R.color.blue));
-        }
+        binding.category.setBackgroundColor(getResources().getColor(
+                selectedType == 0 ? R.color.blue : android.R.color.transparent));
+        binding.category.setTextColor(getResources().getColor(
+                selectedType == 0 ? R.color.white : R.color.blue));
+
+        binding.mode.setBackgroundColor(getResources().getColor(
+                selectedType == 1 ? R.color.blue : android.R.color.transparent));
+        binding.mode.setTextColor(getResources().getColor(
+                selectedType == 1 ? R.color.white : R.color.blue));
     }
 
-    String updateDate() {
-        SimpleDateFormat simpleDateFormat;
-        if (selectedTab == 2) {
-            simpleDateFormat = new SimpleDateFormat("yyyy", Locale.getDefault());
-        } else if (selectedTab == 1) {
-            simpleDateFormat = new SimpleDateFormat("MMMM, yyyy", Locale.getDefault());
-        } else {
-            simpleDateFormat = new SimpleDateFormat("MMMM dd, yyyy", Locale.getDefault());
-        }
-
-        String formattedDate = simpleDateFormat.format(calendar.getTime());
+    private String updateDate() {
+        SimpleDateFormat format = new SimpleDateFormat(getDateFormatPattern(), Locale.getDefault());
+        String formattedDate = format.format(calendar.getTime());
         binding.currentDate.setText(formattedDate);
         fetchTransactionsForDate(formattedDate);
         return formattedDate;
     }
 
-    private void fetchTransactionsForDate(String selectedDate) {
-        String path;
-        if (selectedTab == 0) {
-            path = "date";
-        } else if (selectedTab == 1) {
-            path = "monthYear";
-        } else {
-            path = "year";
+    private String getDateFormatPattern() {
+        switch (selectedTab) {
+            case 2: return "yyyy";
+            case 1: return "MMMM, yyyy";
+            default: return "MMMM dd, yyyy";
         }
+    }
 
+    private void fetchTransactionsForDate(String selectedDate) {
+        String path = getFirebasePath();
         mindYourMoneyRef.orderByChild(path).equalTo(selectedDate)
                 .addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot snapshot) {
                         List<Transaction> transactions = new ArrayList<>();
-
-                        for (DataSnapshot transactionSnapshot : snapshot.getChildren()) {
-                            Transaction transaction = transactionSnapshot.getValue(Transaction.class);
-                            if (transaction != null) {
-                                transactions.add(transaction);
-                            }
+                        for (DataSnapshot ds : snapshot.getChildren()) {
+                            Transaction t = ds.getValue(Transaction.class);
+                            if (t != null) transactions.add(t);
                         }
-
-                        if (transactions.isEmpty()) {
-                            binding.emptyState.setVisibility(View.VISIBLE);
-                            binding.anyChart.setVisibility(View.GONE);
-                        } else {
-                            binding.emptyState.setVisibility(View.GONE);
-                            binding.anyChart.setVisibility(View.VISIBLE);
-                            updatePieChart(transactions);
-                        }
+                        updateChartVisibility(transactions);
+                        if (!transactions.isEmpty()) updatePieChart(transactions);
                     }
 
                     @Override
                     public void onCancelled(@NonNull DatabaseError error) {
-                        Log.e("StatsActivity", "Failed to read data", error.toException());
+                        Log.e("StatsActivity", "Database error: ", error.toException());
                     }
                 });
     }
 
-    private void updatePieChart(List<Transaction> transactions) {
-        // Clear any existing chart first
-        binding.anyChart.clear();
-
-        // Create a new pie chart
-        Pie pie = AnyChart.pie();
-
-        // Set up the chart based on selected type
-        if (selectedType == 0) {
-            setupCategoryChart(pie, transactions);
-        } else {
-            setupPaymentModeChart(pie, transactions);
+    private String getFirebasePath() {
+        switch (selectedTab) {
+            case 0: return "date";
+            case 1: return "monthYear";
+            default: return "year";
         }
-
-        // Apply the chart to the view
-        binding.anyChart.setChart(pie);
     }
 
-    private void setupCategoryChart(Pie pie, List<Transaction> transactions) {
-        Map<String, Float> categoryTotals = new HashMap<>();
+    private void updateChartVisibility(List<Transaction> transactions) {
+        if (transactions.isEmpty()) {
+            binding.emptyState.setVisibility(View.VISIBLE);
+            chartWebView.setVisibility(View.GONE);
+        } else {
+            binding.emptyState.setVisibility(View.GONE);
+            chartWebView.setVisibility(View.VISIBLE);
+        }
+    }
 
+    private void updatePieChart(List<Transaction> transactions) {
+        if (selectedType == 0) {
+            generateCategoryChart(transactions);
+        } else {
+            generatePaymentModeChart(transactions);
+        }
+    }
+
+    private void generateCategoryChart(List<Transaction> transactions) {
+        Map<String, Float> data = new HashMap<>();
         for (Transaction t : transactions) {
             String category = t.getCategory();
             float amount = (float) t.getAmount();
-            categoryTotals.put(category, categoryTotals.getOrDefault(category, 0f) + amount);
+            data.put(category, data.getOrDefault(category, 0f) + amount);
         }
-
-        List<DataEntry> dataEntries = new ArrayList<>();
-        for (Map.Entry<String, Float> entry : categoryTotals.entrySet()) {
-            dataEntries.add(new ValueDataEntry(entry.getKey(), entry.getValue()));
-        }
-
-        pie.title("Expenses by Category");
-        pie.labels().position("outside");
-
-        // Configure legend
-        pie.legend().title().enabled(true);
-        pie.legend().title().text("Categories").padding(0d, 0d, 10d, 0d);
-
-        // Adjust legend position based on orientation
-        int orientation = getResources().getConfiguration().orientation;
-        if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            pie.legend().position("right");
-            pie.legend().itemsLayout(LegendLayout.VERTICAL);
-        } else {
-            pie.legend().position("center-bottom");
-            pie.legend().itemsLayout(LegendLayout.HORIZONTAL);
-        }
-
-        pie.legend().align(Align.CENTER);
-
-        // Set the data
-        pie.data(dataEntries);
+        renderChart(data, "Expenses by Category");
     }
 
-    private void setupPaymentModeChart(Pie pie, List<Transaction> transactions) {
-        Map<String, Float> modeTotals = new HashMap<>();
-
+    private void generatePaymentModeChart(List<Transaction> transactions) {
+        Map<String, Float> data = new HashMap<>();
         for (Transaction t : transactions) {
             String mode = t.getAccount();
             float amount = (float) t.getAmount();
-            modeTotals.put(mode, modeTotals.getOrDefault(mode, 0f) + amount);
+            data.put(mode, data.getOrDefault(mode, 0f) + amount);
+        }
+        renderChart(data, "Expenses by Payment Mode");
+    }
+
+    private void renderChart(Map<String, Float> data, String title) {
+        StringBuilder dataRows = new StringBuilder();
+        for (Map.Entry<String, Float> entry : data.entrySet()) {
+            dataRows.append(String.format(Locale.US, "['%s', %.2f],",
+                    entry.getKey(), entry.getValue()));
         }
 
-        List<DataEntry> dataEntries = new ArrayList<>();
-        for (Map.Entry<String, Float> entry : modeTotals.entrySet()) {
-            dataEntries.add(new ValueDataEntry(entry.getKey(), entry.getValue()));
-        }
+        String html = "<!DOCTYPE html><html><head>"
+                + "<meta name='viewport' content='width=device-width, initial-scale=1.0'>"
+                + "<script type='text/javascript' src='https://www.gstatic.com/charts/loader.js'></script>"
+                + "<script type='text/javascript'>"
+                + "google.charts.load('current', {packages:['corechart']});"
+                + "google.charts.setOnLoadCallback(drawChart);"
+                + "function drawChart() {"
+                + "var data = new google.visualization.DataTable();"
+                + "data.addColumn('string', 'Item');"
+                + "data.addColumn('number', 'Amount');"
+                + "data.addRows([" + dataRows.toString() + "]);"
 
-        pie.title("Expenses by Payment Mode");
-        pie.labels().position("outside");
+                + "var options = {"
+                + "pieHole: 0.5,"
+                + "backgroundColor: 'transparent',"
+                + "fontName: 'Segoe UI',"
+                + "fontSize: 16,"
+                + "tooltip: { text: 'percentage' },"
+                + "legend: { position: 'top', alignment: 'center', textStyle: { fontSize: 16, color: '#333' } },"
+                + "chartArea: { width: '90%', height: '75%' },"
+                + "pieSliceText: 'percentage',"
+                + "pieSliceTextStyle: { fontSize: 15, color: 'white' },"
+                + "colors: ['#4e79a7', '#f28e2b', '#e15759', '#76b7b2', '#59a14f', '#edc948', '#b07aa1', '#ff9da7']"
+                + "};"
 
-        // Configure legend
-        pie.legend().title().enabled(true);
-        pie.legend().title().text("Payment Mode").padding(0d, 0d, 10d, 0d);
+                + "var chart = new google.visualization.PieChart(document.getElementById('chart'));"
+                + "chart.draw(data, options);"
+                + "}"
+                + "</script></head>"
+                + "<body style='margin:0;padding:0;background-color:transparent;'>"
+                + "<div id='chart' style='width:100%; height:100vh;'></div>"
+                + "</body></html>";
 
-        // Adjust legend position based on orientation
-        int orientation = getResources().getConfiguration().orientation;
-        if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            pie.legend().position("right");
-            pie.legend().itemsLayout(LegendLayout.VERTICAL);
-        } else {
-            pie.legend().position("center-bottom");
-            pie.legend().itemsLayout(LegendLayout.HORIZONTAL);
-        }
+        chartWebView.loadDataWithBaseURL(null, html, "text/html", "UTF-8", null);
+    }
 
-        pie.legend().align(Align.CENTER);
 
-        // Set the data
-        pie.data(dataEntries);
+
+
+    private String getLegendPosition() {
+        return getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE
+                ? "right" : "bottom";
     }
 }
