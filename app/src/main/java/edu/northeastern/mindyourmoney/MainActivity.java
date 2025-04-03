@@ -7,17 +7,12 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.Toast;
-
-
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.recyclerview.widget.LinearLayoutManager;
-
 import com.google.android.material.navigation.NavigationBarView;
-
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -53,7 +48,6 @@ public class MainActivity extends AppCompatActivity implements TransactionsAdapt
         mindYourMoneyRef = FirebaseDatabase.getInstance().getReference("transactionHistory");
         calendar = Calendar.getInstance();
         currentDisplayDate = updateDate();
-        Log.println(Log.INFO,"Date",currentDisplayDate);
         setCategories();
         binding.nextButton.setOnClickListener(new View.OnClickListener() {
             @Override
