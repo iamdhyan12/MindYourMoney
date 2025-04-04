@@ -18,5 +18,12 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         Intent newIntent = new Intent(MainActivity.this, TransactionActivity.class);
         startActivity(newIntent);
+
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        finish();
     }
 }

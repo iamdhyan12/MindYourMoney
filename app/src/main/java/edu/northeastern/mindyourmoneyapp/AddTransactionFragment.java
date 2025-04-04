@@ -1,6 +1,8 @@
 package edu.northeastern.mindyourmoneyapp;
 
 import android.app.DatePickerDialog;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
@@ -9,11 +11,14 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
+import com.google.android.material.navigation.NavigationBarView;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
@@ -21,12 +26,14 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 
+import edu.northeastern.mindyourmoneyapp.databinding.ActivityTransactionBinding;
 import edu.northeastern.mindyourmoneyapp.databinding.FragmentAddTransactionBinding;
 import edu.northeastern.mindyourmoneyapp.databinding.ListDialogBinding;
 
 public class AddTransactionFragment extends BottomSheetDialogFragment {
 
     FragmentAddTransactionBinding binding;
+
 
     private DatabaseReference mindYourMoneyRef;
 
@@ -150,14 +157,8 @@ public class AddTransactionFragment extends BottomSheetDialogFragment {
 
                 mindYourMoneyRef.child(transactionId).setValue(transaction);
 
-                // Show success message
                 Toast.makeText(getContext(), "Transaction added successfully!", Toast.LENGTH_SHORT).show();
-
-                Intent intent = new Intent(getActivity(), MainActivity.class);
-                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
-                startActivity(intent);
-                getActivity().finish();
-
+                dismiss();
             }
         });
 
