@@ -62,8 +62,8 @@
                 android:textColor="#9E9E9E"
                 android:textSize="12sp" />
         </LinearLayout>
-
     </LinearLayout>
+
 
     <TextView
         android:id="@+id/transactionAmount"

@@ -5,7 +5,7 @@ public class Transaction {
 
     private String id;
 
-    private String  category, account, note;
+    private String  category, account, note, imageUrl;
     private String date;
     private double amount;
 
@@ -15,8 +15,16 @@ public class Transaction {
 
     }
 
-    public Transaction(String id,String category, String account, String note, String date,
-                       String monthYear,String year, double amount) {
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
+    }
+
+    public Transaction(String id, String category, String account, String note, String date,
+                       String monthYear, String year, double amount, String imageUrl) {
         this.id = id;
         this.category = category;
         this.account = account;
@@ -25,6 +33,7 @@ public class Transaction {
         this.monthYear = monthYear;
         this.year = year;
         this.amount = amount;
+        this.imageUrl = imageUrl;
     }
 
     public String getId() {

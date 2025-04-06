@@ -5,12 +5,14 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
+import com.bumptech.glide.Glide;
 import com.google.android.material.tabs.TabLayout;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -31,11 +33,15 @@ public class TransactionFragment extends Fragment implements TransactionsAdapter
     private Calendar calendar;
     private int selectedTab = 0;
     private String currentDisplayDate;
+    private View imageOverlay;
+    private ImageView imagePreview;
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         binding = FragmentTransactionBinding.inflate(inflater, container, false);
+        imageOverlay = binding.globalImageOverlay;
+        imagePreview = binding.globalImagePreview;
         return binding.getRoot();
     }
 
@@ -49,11 +55,23 @@ public class TransactionFragment extends Fragment implements TransactionsAdapter
         setupDateNavigation();
         setupTabLayout();
 
-        // Set initial tab based on default selection
         TabLayout.Tab tab = binding.tabLayout.getTabAt(selectedTab);
         if (tab != null) {
             tab.select();
         }
+
+        getParentFragmentManager().setFragmentResultListener("transaction_request_key", this, (requestKey, result) -> {
+            boolean added = result.getBoolean("transaction_added", false);
+            if (added) {
+                fetchTransactionsForDate(currentDisplayDate);
+            }
+        });
+        imageOverlay.setOnClickListener(v -> {
+            imageOverlay.setVisibility(View.GONE);
+            imagePreview.setVisibility(View.GONE);
+        });
+
+
 
         currentDisplayDate = updateDate();
     }
@@ -104,7 +122,7 @@ public class TransactionFragment extends Fragment implements TransactionsAdapter
         });
     }
 
-    private String updateDate(){
+    public String updateDate(){
         SimpleDateFormat simpleDateFormat;
         if(selectedTab==2) {
             simpleDateFormat = new SimpleDateFormat("YYYY");
@@ -121,11 +139,11 @@ public class TransactionFragment extends Fragment implements TransactionsAdapter
 
     public void fetchTransactionsForDate(String selectedDate) {
         String path = "";
-        if(selectedTab == 0){
+        if (selectedTab == 0) {
             path = "date";
-        }else if(selectedTab == 1){
+        } else if (selectedTab == 1) {
             path = "monthYear";
-        }else if(selectedTab==2){
+        } else if (selectedTab == 2) {
             path = "year";
         }
 
@@ -142,13 +160,24 @@ public class TransactionFragment extends Fragment implements TransactionsAdapter
                             }
                         }
 
-                        TransactionsAdapter transactionsAdapter = new TransactionsAdapter(getContext(), transactions, TransactionFragment.this);
+                        TransactionsAdapter transactionsAdapter = new TransactionsAdapter(
+                                getContext(),
+                                transactions,
+                                TransactionFragment.this,
+                                imageUrl -> {
+                                    imagePreview.setVisibility(View.VISIBLE);
+                                    imageOverlay.setVisibility(View.VISIBLE);
+                                    Glide.with(requireActivity()).load(imageUrl).into(imagePreview);
+                                }
+                        );
+
+
                         binding.transactionList.setLayoutManager(new LinearLayoutManager(getContext()));
                         binding.transactionList.setAdapter(transactionsAdapter);
 
-                        if(transactions.size()==0){
+                        if (transactions.isEmpty()) {
                             binding.emptyState.setVisibility(View.VISIBLE);
-                        }else {
+                        } else {
                             binding.emptyState.setVisibility(View.GONE);
                         }
                     }
@@ -159,6 +188,7 @@ public class TransactionFragment extends Fragment implements TransactionsAdapter
                     }
                 });
     }
+
 
     @Override
     public void onTransactionDeleted() {
