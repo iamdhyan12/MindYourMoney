@@ -33,6 +33,12 @@ android {
     buildFeatures {
         viewBinding = true
     }
+    packaging{
+        resources{
+            excludes += "META-INF/NOTICE.md"
+            excludes += "META-INF/LICENSE.md"
+        }
+    }
 }
 
 dependencies {
@@ -42,6 +48,8 @@ dependencies {
     implementation ("com.squareup.okhttp3:logging-interceptor:4.10.0")
     implementation ("com.github.bumptech.glide:glide:4.15.1")
     annotationProcessor ("com.github.bumptech.glide:compiler:4.15.1")
+    implementation ("com.sun.mail:android-mail:1.6.7")
+    implementation ("com.sun.mail:android-activation:1.6.7")
     implementation(libs.activity)
     implementation(libs.constraintlayout)
     implementation(libs.lifecycle.livedata.ktx)

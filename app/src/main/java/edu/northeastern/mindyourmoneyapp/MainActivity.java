@@ -16,7 +16,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
-        Intent newIntent = new Intent(MainActivity.this, TransactionActivity.class);
+        Intent newIntent = new Intent(MainActivity.this, LoginActivity.class);
         startActivity(newIntent);
 
     }
