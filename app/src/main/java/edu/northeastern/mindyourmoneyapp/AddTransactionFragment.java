@@ -5,15 +5,12 @@ import static android.content.Context.MODE_PRIVATE;
 import android.app.Activity;
 import android.app.DatePickerDialog;
 import android.Manifest;
-import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
-import android.security.keystore.UserNotAuthenticatedException;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -28,13 +25,11 @@ import androidx.core.content.FileProvider;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
-import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
-import com.google.android.material.navigation.NavigationBarView;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
-import org.json.JSONException;
+
 import org.json.JSONObject;
 
 import java.io.File;
@@ -46,7 +41,6 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 
-import edu.northeastern.mindyourmoneyapp.databinding.ActivityTransactionBinding;
 import edu.northeastern.mindyourmoneyapp.databinding.FragmentAddTransactionBinding;
 import edu.northeastern.mindyourmoneyapp.databinding.ListDialogBinding;
 import okhttp3.Call;
@@ -62,28 +56,18 @@ import okhttp3.logging.HttpLoggingInterceptor;
 public class AddTransactionFragment extends BottomSheetDialogFragment {
 
     FragmentAddTransactionBinding binding;
-
-
     private DatabaseReference mindYourMoneyRef;
     private static final int REQUEST_CODE_CAMERA_PERMISSION = 101;
     private static final int REQUEST_CODE_CAMERA = 102;
-
     private Uri capturedImageUri = null;
-
-
-
     String monthYear,year;
-
     public AddTransactionFragment() {
-
     }
-
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
     }
-
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -189,7 +173,6 @@ public class AddTransactionFragment extends BottomSheetDialogFragment {
 
         return binding.getRoot();
     }
-
     private void saveTransaction(String imageUrl) {
         String category = binding.category.getText().toString().trim();
         String account = binding.account.getText().toString().trim();
@@ -253,7 +236,6 @@ public class AddTransactionFragment extends BottomSheetDialogFragment {
             }
         }
     }
-
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
