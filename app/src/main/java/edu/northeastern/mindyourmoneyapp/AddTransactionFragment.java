@@ -1,15 +1,19 @@
 package edu.northeastern.mindyourmoneyapp;
 
+import static android.content.Context.MODE_PRIVATE;
+
 import android.app.Activity;
 import android.app.DatePickerDialog;
 import android.Manifest;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.security.keystore.UserNotAuthenticatedException;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -206,9 +210,14 @@ public class AddTransactionFragment extends BottomSheetDialogFragment {
         mindYourMoneyRef = FirebaseDatabase.getInstance().getReference("transactionHistory");
 
         String transactionId = mindYourMoneyRef.push().getKey();
-        Transaction transaction = new Transaction(transactionId, category, account, note, date, monthYear, year, amount, imageUrl);
-
-        Log.println(Log.INFO,"Trasaction",transaction.toString());
+        SharedPreferences prefs = requireActivity().getSharedPreferences("MyPrefs", MODE_PRIVATE);
+        String savedUsername = prefs.getString("username", null);
+        if(savedUsername == null){
+            Toast.makeText(requireContext(), "Unauthenticated User", Toast.LENGTH_LONG).show();
+            Intent intent = new Intent(getActivity() , LoginActivity.class);
+            startActivity(intent);
+        }
+        Transaction transaction = new Transaction(transactionId, category, account, note, date, monthYear, year, amount, imageUrl,savedUsername);
 
         mindYourMoneyRef.child(transactionId).setValue(transaction);
 
@@ -285,7 +294,7 @@ public class AddTransactionFragment extends BottomSheetDialogFragment {
                     .setType(MultipartBody.FORM)
                     .addFormDataPart("file", tempFile.getName(),
                             RequestBody.create(tempFile, MediaType.parse("image/*")))
-                    .addFormDataPart("upload_preset", "mindyourmoney_preset") // your preset
+                    .addFormDataPart("upload_preset", "mindyourmoney_preset")
                     .build();
 
             OkHttpClient client = new OkHttpClient.Builder()
@@ -293,7 +302,7 @@ public class AddTransactionFragment extends BottomSheetDialogFragment {
                     .build();
 
             Request request = new Request.Builder()
-                    .url("https://api.cloudinary.com/v1_1/detsebj18/image/upload") // your cloud name
+                    .url("https://api.cloudinary.com/v1_1/detsebj18/image/upload")
                     .post(requestBody)
                     .build();
 

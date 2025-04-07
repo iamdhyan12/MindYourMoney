@@ -1,9 +1,12 @@
 package edu.northeastern.mindyourmoneyapp;
 
+import static androidx.core.content.ContentProviderCompat.requireContext;
+
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.EditText;
@@ -29,6 +32,14 @@ public class LoginActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         FirebaseApp.initializeApp(this);
         setContentView(R.layout.activity_login);
+
+        SharedPreferences prefs = getSharedPreferences("MyPrefs", MODE_PRIVATE);
+        String savedUsername = prefs.getString("username", null);
+        if(savedUsername != null){
+            Intent intent = new Intent(LoginActivity.this, TransactionActivity.class);
+            intent.putExtra("username", savedUsername);
+            startActivity(intent);
+        }
         loginUsername = findViewById(R.id.login_username);
         loginPassword = findViewById(R.id.login_password);
         signupRedirectText = findViewById(R.id.signupRedirectText);
@@ -89,6 +100,10 @@ public class LoginActivity extends AppCompatActivity {
                         String usernameFromDB = snapshot.child(userUsername).child("username").getValue(String.class);
                         Integer rewards = snapshot.child(userUsername).child("rewards").getValue(Integer.class);
                         Integer budget = snapshot.child(userUsername).child("budget").getValue(Integer.class);
+                        SharedPreferences prefs = getSharedPreferences("MyPrefs", MODE_PRIVATE);
+                        SharedPreferences.Editor editor = prefs.edit();
+                        editor.putString("username", usernameFromDB);
+                        editor.apply();
                         Intent intent = new Intent(LoginActivity.this, TransactionActivity.class);
                         intent.putExtra("name", nameFromDB);
                         intent.putExtra("email", emailFromDB);

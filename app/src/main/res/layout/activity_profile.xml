@@ -210,24 +210,37 @@
         android:text="Edit Profile"
         android:textSize="18sp"
         app:cornerRadius="20dp"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/logoutbutton"
         app:layout_constraintEnd_toEndOf="@id/linearLayout"
         app:layout_constraintStart_toStartOf="@id/linearLayout"
-        app:layout_constraintTop_toBottomOf="@id/linearLayout"
-        app:layout_constraintVertical_bias="0.385" />
+        app:layout_constraintTop_toBottomOf="@id/linearLayout" />
+
+    <Button
+        android:id="@+id/logoutbutton"
+        android:layout_width="0dp"
+        android:layout_height="60dp"
+        android:layout_marginTop="3dp"
+        android:backgroundTint="#EB1B1B"
+        android:gravity="center"
+        android:text="Logout"
+        android:textSize="18sp"
+        app:cornerRadius="20dp"
+        app:layout_constraintBottom_toBottomOf="@id/doneButton"
+        app:layout_constraintEnd_toEndOf="@+id/editButton"
+        app:layout_constraintStart_toStartOf="@+id/editButton"
+        app:layout_constraintTop_toBottomOf="@+id/editButton" />
 
     <Button
         android:id="@+id/doneButton"
         android:layout_width="0dp"
         android:layout_height="60dp"
-        android:layout_marginTop="3dp"
         android:backgroundTint="#1D628A"
         android:gravity="center"
         android:text="Done"
         android:textSize="18sp"
         app:cornerRadius="20dp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="@id/linearLayout"
-        app:layout_constraintStart_toStartOf="@id/linearLayout"
-        app:layout_constraintTop_toBottomOf="@+id/editButton" />
+        app:layout_constraintEnd_toEndOf="@+id/logoutbutton"
+        app:layout_constraintStart_toStartOf="@+id/logoutbutton"
+        app:layout_constraintTop_toBottomOf="@+id/logoutbutton" />
 </androidx.constraintlayout.widget.ConstraintLayout>

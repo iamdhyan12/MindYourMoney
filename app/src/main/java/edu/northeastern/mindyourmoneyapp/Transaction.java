@@ -11,6 +11,16 @@ public class Transaction {
 
     private String monthYear, year;
 
+    private String username;
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
     public Transaction(){
 
     }
@@ -24,7 +34,7 @@ public class Transaction {
     }
 
     public Transaction(String id, String category, String account, String note, String date,
-                       String monthYear, String year, double amount, String imageUrl) {
+                       String monthYear, String year, double amount, String imageUrl,String username) {
         this.id = id;
         this.category = category;
         this.account = account;
@@ -34,6 +44,7 @@ public class Transaction {
         this.year = year;
         this.amount = amount;
         this.imageUrl = imageUrl;
+        this.username = username;
     }
 
     public String getId() {

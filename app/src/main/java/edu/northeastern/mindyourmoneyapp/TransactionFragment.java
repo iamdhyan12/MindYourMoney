@@ -1,11 +1,16 @@
 package edu.northeastern.mindyourmoneyapp;
 
+import static android.content.Context.MODE_PRIVATE;
+
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -23,6 +28,7 @@ import com.google.firebase.database.ValueEventListener;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Objects;
 
 import edu.northeastern.mindyourmoneyapp.databinding.FragmentTransactionBinding;
 
@@ -138,6 +144,13 @@ public class TransactionFragment extends Fragment implements TransactionsAdapter
     }
 
     public void fetchTransactionsForDate(String selectedDate) {
+        SharedPreferences prefs = requireActivity().getSharedPreferences("MyPrefs", MODE_PRIVATE);
+        String savedUsername = prefs.getString("username", null);
+        if(savedUsername == null){
+            Toast.makeText(requireContext(), "Unauthenticated User", Toast.LENGTH_LONG).show();
+            Intent intent = new Intent(getActivity() , LoginActivity.class);
+            startActivity(intent);
+        }
         String path = "";
         if (selectedTab == 0) {
             path = "date";
@@ -152,10 +165,9 @@ public class TransactionFragment extends Fragment implements TransactionsAdapter
                     @Override
                     public void onDataChange(@NonNull DataSnapshot snapshot) {
                         ArrayList<Transaction> transactions = new ArrayList<>();
-
                         for (DataSnapshot transactionSnapshot : snapshot.getChildren()) {
                             Transaction transaction = transactionSnapshot.getValue(Transaction.class);
-                            if (transaction != null) {
+                            if (transaction != null && Objects.equals(transaction.getUsername(), savedUsername)) {
                                 transactions.add(transaction);
                             }
                         }
