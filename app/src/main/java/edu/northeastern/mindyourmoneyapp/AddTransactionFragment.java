@@ -2,6 +2,9 @@ package edu.northeastern.mindyourmoneyapp;
 
 import static android.content.Context.MODE_PRIVATE;
 
+import static edu.northeastern.mindyourmoneyapp.Constants.categories;
+import static edu.northeastern.mindyourmoneyapp.Constants.setCategories;
+
 import android.app.Activity;
 import android.app.DatePickerDialog;
 import android.Manifest;
@@ -110,14 +113,7 @@ public class AddTransactionFragment extends BottomSheetDialogFragment {
             AlertDialog categoryDialog = new AlertDialog.Builder(getContext()).create();
             categoryDialog.setView(dialogBinding.getRoot());
 
-            ArrayList<Category> categories = new ArrayList<>();
-            categories.add(new Category("Groceries",R.drawable.ic_accounts,R.color.category1));
-            categories.add(new Category("Fuel",R.drawable.ic_accounts,R.color.category2));
-            categories.add(new Category("Business",R.drawable.ic_accounts,R.color.category3));
-            categories.add(new Category("Dining",R.drawable.ic_accounts,R.color.category4));
-            categories.add(new Category("Utilities",R.drawable.ic_accounts,R.color.category5));
-            categories.add(new Category("General",R.drawable.ic_accounts,R.color.category6));
-
+            setCategories();
             CategoryAdapter categoryAdapter = new CategoryAdapter(getContext(), categories, new CategoryAdapter.CategoryClickListener() {
                 @Override
                 public void onCategoryClicked(Category category) {

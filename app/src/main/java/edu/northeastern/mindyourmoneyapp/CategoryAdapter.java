@@ -42,9 +42,7 @@ public class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.Catego
         Category category = categories.get(position);
         holder.binding.categoryText.setText(category.getCategoryName());
         holder.binding.categoryIcon.setImageResource(category.getCategoryImage());
-
         holder.binding.categoryIcon.setBackgroundTintList(context.getColorStateList(category.getCategoryColor()));
-
         holder.itemView.setOnClickListener(c-> {
             categoryClickListener.onCategoryClicked(category);
         });
