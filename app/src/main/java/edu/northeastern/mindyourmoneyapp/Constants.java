@@ -21,7 +21,7 @@ public class Constants {
     public static void setCategories() {
         categories = new ArrayList<>();
         categories.add(new Category("Groceries",R.drawable.ic_accounts,R.color.category1));
-        categories.add(new Category("Fuel",R.drawable.gas_station,R.color.category2));
+        categories.add(new Category("Fuel",R.drawable.ic_accounts,R.color.category2));
         categories.add(new Category("Business",R.drawable.ic_accounts,R.color.category3));
         categories.add(new Category("Dining",R.drawable.ic_accounts,R.color.category4));
         categories.add(new Category("Utilities",R.drawable.ic_accounts,R.color.category5));
