@@ -60,7 +60,6 @@ public class ReminderReceiver extends BroadcastReceiver {
     private void showNotification(Context context) {
         String channelId = "daily_reminder_channel";
         String channelName = "Daily Reminder";
-
         NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
             NotificationChannel channel = new NotificationChannel(
@@ -71,8 +70,10 @@ public class ReminderReceiver extends BroadcastReceiver {
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, channelId)
                 .setContentTitle("Daily Expense Reminder")
                 .setContentText("Don't forget to log today's expenses and stay on top of your budget!")
-                .setSmallIcon(R.drawable.ic_notifications_black_24dp)
-                .setAutoCancel(true);
+                .setSmallIcon(R.drawable.ic_notification)
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT);
+//                .setAutoCancel(true);
+
 
         manager.notify(1001, builder.build());
     }

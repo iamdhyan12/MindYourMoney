@@ -5,6 +5,7 @@ import static edu.northeastern.mindyourmoneyapp.Constants.setCategories;
 import android.Manifest;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -38,18 +39,34 @@ public class TransactionActivity extends AppCompatActivity {
         binding = ActivityTransactionBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
+        SharedPreferences prefs = getSharedPreferences("MyPrefs", MODE_PRIVATE);
+        String username = prefs.getString("username", null);
+
         setCategories();
         setupBottomNavigation();
         setRewardForUser();
         requestNotificationPermission();
-        scheduleDailyReminder();
 
+        if (username == null) {
+            username = getIntent().getStringExtra("username");
+        }
+
+        if (username == null) {
+            startActivity(new Intent(this, LoginActivity.class));
+            finish();
+            return;
+        }
+
+        schedule5PMExpenseNotification(this);
+        requestExactAlarmPermission();
+
+        // ✅ Fix for blank screen: load default fragment
         if (savedInstanceState == null) {
             getSupportFragmentManager().beginTransaction()
                     .replace(R.id.fragment_container, new TransactionFragment())
                     .commit();
+            binding.navView.setSelectedItemId(R.id.transaction);
         }
-
     }
 
     private void setupBottomNavigation() {
@@ -115,7 +132,7 @@ public class TransactionActivity extends AppCompatActivity {
         DatabaseReference transactionRef = FirebaseDatabase.getInstance().getReference("transactionHistory");
         DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users").child(username);
 
-        SimpleDateFormat dateFormat = new SimpleDateFormat("MMMM, YYYY", Locale.getDefault());
+        SimpleDateFormat dateFormat = new SimpleDateFormat("MMMM, yyyy", Locale.getDefault());
         String filterDate = dateFormat.format(calendar.getTime());
 
         final double[] amountSum = {0.0};
@@ -172,26 +189,59 @@ public class TransactionActivity extends AppCompatActivity {
         });
     }
 
-    private void scheduleDailyReminder() {
-        Intent intent = new Intent(this, ReminderReceiver.class);
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(
-                this, 0, intent, PendingIntent.FLAG_IMMUTABLE);
+    private void requestExactAlarmPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+            if (alarmManager != null && !alarmManager.canScheduleExactAlarms()) {
+                Intent intent = new Intent(android.provider.Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM);
+                startActivity(intent);
+            }
+        }
+    }
 
-        AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+    public static void schedule5PMExpenseNotification(Context context) {
+        try {
+            AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+            if (alarmManager == null) return;
 
-        Calendar calendar = Calendar.getInstance();
-//        calendar.set(Calendar.HOUR_OF_DAY, 21); // 9 PM
-//        calendar.set(Calendar.MINUTE, 0);
-//        calendar.set(Calendar.SECOND, 0);
-        calendar.add(Calendar.MINUTE, 1);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !alarmManager.canScheduleExactAlarms()) {
+                Log.e("Alarm", "Exact alarm permission denied");
+                return;
+            }
 
-        if (alarmManager != null) {
-            alarmManager.setInexactRepeating(
-                    AlarmManager.RTC_WAKEUP,
-                    calendar.getTimeInMillis(),
-                    AlarmManager.INTERVAL_DAY,
-                    pendingIntent
+            Intent intent = new Intent(context, DailyExpenseReceiver.class);
+            PendingIntent pendingIntent = PendingIntent.getBroadcast(
+                    context,
+                    101,
+                    intent,
+                    PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
             );
+
+            Calendar calendar = Calendar.getInstance();
+            calendar.set(Calendar.HOUR_OF_DAY, 17); // 5 PM
+            calendar.set(Calendar.MINUTE, 0);
+            calendar.set(Calendar.SECOND, 0);
+
+            if (calendar.getTimeInMillis() <= System.currentTimeMillis()) {
+                calendar.add(Calendar.DAY_OF_YEAR, 1);
+            }
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                alarmManager.setExactAndAllowWhileIdle(
+                        AlarmManager.RTC_WAKEUP,
+                        calendar.getTimeInMillis(),
+                        pendingIntent
+                );
+            } else {
+                alarmManager.setRepeating(
+                        AlarmManager.RTC_WAKEUP,
+                        calendar.getTimeInMillis(),
+                        AlarmManager.INTERVAL_DAY,
+                        pendingIntent
+                );
+            }
+        } catch (SecurityException e) {
+            Log.e("Alarm", "Permission error: " + e.getMessage());
         }
     }
 
