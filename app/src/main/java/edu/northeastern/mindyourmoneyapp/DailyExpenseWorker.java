@@ -3,7 +3,6 @@ package edu.northeastern.mindyourmoneyapp;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -12,6 +11,8 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.NotificationCompat;
+import androidx.work.Worker;
+import androidx.work.WorkerParameters;
 
 import com.google.firebase.database.*;
 
@@ -19,19 +20,21 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Locale;
 
-public class DailyExpenseReceiver extends BroadcastReceiver {
+public class DailyExpenseWorker extends Worker {
 
+    public DailyExpenseWorker(@NonNull Context context, @NonNull WorkerParameters workerParams) {
+        super(context, workerParams);
+    }
+
+    @NonNull
     @Override
-    public void onReceive(Context context, Intent intent) {
-        // Reschedule for next day first
-        TransactionActivity.schedule5PMExpenseNotification(context);
-
-        SharedPreferences prefs = context.getSharedPreferences("MyPrefs", Context.MODE_PRIVATE);
+    public Result doWork() {
+        SharedPreferences prefs = getApplicationContext().getSharedPreferences("MyPrefs", Context.MODE_PRIVATE);
         String username = prefs.getString("username", null);
 
         if (username == null) {
-            Log.e("ExpenseReceiver", "User not logged in");
-            return;
+            Log.e("ExpenseWorker", "User not logged in");
+            return Result.failure();
         }
 
         String currentMonth = new SimpleDateFormat("MMMM, yyyy", Locale.getDefault())
@@ -42,7 +45,7 @@ public class DailyExpenseReceiver extends BroadcastReceiver {
         ref.orderByChild("username").equalTo(username)
                 .addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
-                    public void onDataChange(DataSnapshot snapshot) {
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
                         double sum = 0.0;
                         for (DataSnapshot snap : snapshot.getChildren()) {
                             String monthYear = snap.child("monthYear").getValue(String.class);
@@ -51,29 +54,30 @@ public class DailyExpenseReceiver extends BroadcastReceiver {
                                 sum += amount;
                             }
                         }
-                        sendNotification(context, sum, username);
+                        sendNotification(sum, username);
                     }
 
                     @Override
-                    public void onCancelled(DatabaseError error) {
-                        Log.e("ExpenseReceiver", "Database error: " + error.getMessage());
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        Log.e("ExpenseWorker", "Database error: " + error.getMessage());
                     }
                 });
+
+        return Result.success();
     }
 
-    private void sendNotification(Context context, double sum, String username) {
-        String channelId = "expense_summary_channel";
-        NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+    private void sendNotification(double sum, String username) {
+        Context context = getApplicationContext();
+        String channelId = "expense_channel";
 
-        // Create intent to open app with username
-        Intent appIntent = new Intent(context, TransactionActivity.class);
-        appIntent.putExtra("username", username);
-        appIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        Intent intent = new Intent(context, TransactionActivity.class);
+        intent.putExtra("username", username);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
 
         PendingIntent pendingIntent = PendingIntent.getActivity(
                 context,
                 0,
-                appIntent,
+                intent,
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
         );
 
@@ -85,7 +89,7 @@ public class DailyExpenseReceiver extends BroadcastReceiver {
                 .setContentIntent(pendingIntent)
                 .setAutoCancel(true);
 
-        // Create notification channel for Android 8.0+
+        NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel channel = new NotificationChannel(
                     channelId,
