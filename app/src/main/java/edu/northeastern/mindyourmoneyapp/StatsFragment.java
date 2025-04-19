@@ -1,5 +1,8 @@
 package edu.northeastern.mindyourmoneyapp;
 
+import static android.content.Context.MODE_PRIVATE;
+
+import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.util.Log;
@@ -26,6 +29,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 
 import edu.northeastern.mindyourmoneyapp.databinding.FragmentStatsBinding;
 
@@ -38,6 +42,8 @@ public class StatsFragment extends Fragment {
     private int selectedType = 0; // 0 for category, 1 for payment mode
     private String currentDisplayDate;
     private WebView chartWebView;
+
+    String username;
 
     @Nullable
     @Override
@@ -53,11 +59,14 @@ public class StatsFragment extends Fragment {
         mindYourMoneyRef = FirebaseDatabase.getInstance().getReference("transactionHistory");
         calendar = Calendar.getInstance();
 
-        // Initialize WebView
+
         chartWebView = binding.chartWebView;
         chartWebView.getSettings().setJavaScriptEnabled(true);
 
-        // Initialize UI state
+
+        SharedPreferences prefs = getActivity().getSharedPreferences("MyPrefs", MODE_PRIVATE);
+        username = prefs.getString("username", null);
+
         selectedType = 0;
         selectedTab = 0;
         updateButtonState();
@@ -66,7 +75,7 @@ public class StatsFragment extends Fragment {
         setupTypeSelection();
         setupTabLayout();
 
-        // Set initial tab based on default selection
+
         TabLayout.Tab tab = binding.tabLayout.getTabAt(selectedTab);
         if (tab != null) {
             tab.select();
@@ -175,7 +184,10 @@ public class StatsFragment extends Fragment {
                         List<Transaction> transactions = new ArrayList<>();
                         for (DataSnapshot ds : snapshot.getChildren()) {
                             Transaction t = ds.getValue(Transaction.class);
-                            if (t != null) transactions.add(t);
+                            if (t != null && Objects.equals(t.getUsername(), username)) {
+                                transactions.add(t);
+                            }
+
                         }
                         updateChartVisibility(transactions);
                         if (!transactions.isEmpty()) updatePieChart(transactions);
