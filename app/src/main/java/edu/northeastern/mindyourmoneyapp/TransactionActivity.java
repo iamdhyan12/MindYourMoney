@@ -8,6 +8,7 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -135,10 +136,8 @@ public class TransactionActivity extends AppCompatActivity {
 
         DatabaseReference transactionRef = FirebaseDatabase.getInstance().getReference("transactionHistory");
         DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users").child(username);
-
         SimpleDateFormat dateFormat = new SimpleDateFormat("MMMM, yyyy", Locale.getDefault());
         String filterDate = dateFormat.format(calendar.getTime());
-
         final double[] amountSum = {0.0};
 
         transactionRef.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -148,7 +147,6 @@ public class TransactionActivity extends AppCompatActivity {
                     String transUser = transactionSnap.child("username").getValue(String.class);
                     String monthYear = transactionSnap.child("monthYear").getValue(String.class);
                     Double amount = transactionSnap.child("amount").getValue(Double.class);
-
                     if (transUser != null && monthYear != null &&
                             transUser.equals(username) &&
                             monthYear.equals(filterDate) &&
@@ -168,9 +166,10 @@ public class TransactionActivity extends AppCompatActivity {
                         int updatedRewards = rewards;
                         if (amountSum[0] > budget) {
                             updatedRewards -= 50;
-                        } else if (amountSum[0] < budget && rewards > 0) {
+                        } else if (amountSum[0] < budget) {
                             updatedRewards += 100;
                         }
+                        updatedRewards = Math.max(0,updatedRewards);
                         userRef.child("rewards").setValue(updatedRewards);
                     }
 

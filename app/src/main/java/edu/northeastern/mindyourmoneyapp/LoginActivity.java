@@ -56,11 +56,13 @@ public class LoginActivity extends AppCompatActivity {
         signupRedirectText.setOnClickListener(view -> {
             Intent intent = new Intent(LoginActivity.this, SignupActivity.class);
             startActivity(intent);
+            finish();
         });
         passwordReset = findViewById(R.id.forgotPasswordText);
         passwordReset.setOnClickListener(view ->{
             Intent intent = new Intent(LoginActivity.this,ForgotPasswordActivity.class);
             startActivity(intent);
+            finish();
         });
     }
     public Boolean validateUsername(){
