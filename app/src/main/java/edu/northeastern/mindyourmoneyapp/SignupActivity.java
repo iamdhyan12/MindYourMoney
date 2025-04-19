@@ -55,16 +55,22 @@ public class SignupActivity extends AppCompatActivity {
                 reference.child(username).get().addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
                         if (task.getResult().exists()) {
-
                             Toast.makeText(SignupActivity.this, "User already exists!", Toast.LENGTH_SHORT).show();
                         } else {
                             int budget = Integer.parseInt(budgetStr);
                             UserClass user = new UserClass(name, email, username, password, budget, 0);
-                            reference.child(username).setValue(user);
+                            reference.child(username).setValue(user).addOnCompleteListener(task1 -> {
+                                if (task1.isSuccessful()) {
+                                    reference.child(username).child("accounts").child("Cash")
+                                            .setValue(new Account("Cash"));
 
-                            Toast.makeText(SignupActivity.this, "You have signed up successfully!", Toast.LENGTH_SHORT).show();
-                            Intent intent = new Intent(SignupActivity.this, LoginActivity.class);
-                            startActivity(intent);
+                                    Toast.makeText(SignupActivity.this, "You have signed up successfully!", Toast.LENGTH_SHORT).show();
+                                    Intent intent = new Intent(SignupActivity.this, LoginActivity.class);
+                                    startActivity(intent);
+                                } else {
+                                    Toast.makeText(SignupActivity.this, "Signup failed. Try again.", Toast.LENGTH_SHORT).show();
+                                }
+                            });
                         }
                     } else {
                         Toast.makeText(SignupActivity.this, "Failed to check username", Toast.LENGTH_SHORT).show();
@@ -82,4 +88,3 @@ public class SignupActivity extends AppCompatActivity {
         });
     }
 }
-

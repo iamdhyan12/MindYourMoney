@@ -8,6 +8,7 @@ import static edu.northeastern.mindyourmoneyapp.Constants.setCategories;
 import android.app.Activity;
 import android.app.DatePickerDialog;
 import android.Manifest;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -23,17 +24,17 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
-import androidx.core.app.NotificationCompat;
-import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-
+import com.google.firebase.database.ValueEventListener;
 
 import org.json.JSONObject;
 
@@ -62,6 +63,8 @@ public class AddTransactionFragment extends BottomSheetDialogFragment {
 
     FragmentAddTransactionBinding binding;
     private DatabaseReference mindYourMoneyRef;
+
+    String username;
     private static final int REQUEST_CODE_CAMERA_PERMISSION = 101;
     private static final int REQUEST_CODE_CAMERA = 102;
     private Uri capturedImageUri = null;
@@ -128,30 +131,54 @@ public class AddTransactionFragment extends BottomSheetDialogFragment {
             categoryDialog.show();
         });
 
-        binding.account.setOnClickListener(c-> {
+        binding.account.setOnClickListener(c -> {
             ListDialogBinding dialogBinding = ListDialogBinding.inflate(inflater);
             AlertDialog accountsDialog = new AlertDialog.Builder(getContext()).create();
             accountsDialog.setView(dialogBinding.getRoot());
 
             ArrayList<Account> accounts = new ArrayList<>();
-            accounts.add(new Account(0, "Cash"));
-            accounts.add(new Account(0, "Credit Card"));
-            accounts.add(new Account(0, "Debit Card"));
-            accounts.add(new Account(0, "PayPal"));
-            accounts.add(new Account(0, "Other"));
+            SharedPreferences prefs = requireActivity().getSharedPreferences("MyPrefs", Context.MODE_PRIVATE);
+            String username = prefs.getString("username", null);
 
-            AccountsAdapter adapter = new AccountsAdapter(getContext(), accounts, new AccountsAdapter.AccountsClickListener() {
+            if (username == null) {
+                Toast.makeText(getContext(), "User not logged in", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            DatabaseReference userRef = FirebaseDatabase.getInstance()
+                    .getReference("users")
+                    .child(username)
+                    .child("accounts");
+
+            userRef.addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
-                public void onAccountSelected(Account account) {
-                    binding.account.setText(account.getAccountName());
-                    accountsDialog.dismiss();
+                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                    accounts.clear();
+                    for (DataSnapshot ds : snapshot.getChildren()) {
+                        Account account = ds.getValue(Account.class);
+                        if (account != null) accounts.add(account);
+                    }
+
+                    if (accounts.isEmpty()) {
+                        Toast.makeText(getContext(), "No accounts found. Add some in Accounts tab.", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    AccountsAdapter adapter = new AccountsAdapter(getContext(), accounts, account -> {
+                        binding.account.setText(account.getAccountName());
+                        accountsDialog.dismiss();
+                    });
+
+                    dialogBinding.recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+                    dialogBinding.recyclerView.setAdapter(adapter);
+                    accountsDialog.show();
+                }
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError error) {
+                    Toast.makeText(getContext(), "Failed to load accounts", Toast.LENGTH_SHORT).show();
                 }
             });
-            dialogBinding.recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-            dialogBinding.recyclerView.setAdapter(adapter);
-
-            accountsDialog.show();
-
         });
 
         binding.saveTransactionBtn.setOnClickListener(new View.OnClickListener() {
@@ -204,6 +231,8 @@ public class AddTransactionFragment extends BottomSheetDialogFragment {
         Bundle result = new Bundle();
         result.putBoolean("transaction_added", true);
         getParentFragmentManager().setFragmentResult("transaction_request_key", result);
+        FirebaseNotificationListener listener = new FirebaseNotificationListener(getContext());
+        listener.startListening(savedUsername);
         dismiss();
     }
 

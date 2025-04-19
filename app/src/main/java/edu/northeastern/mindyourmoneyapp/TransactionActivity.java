@@ -29,7 +29,9 @@ public class TransactionActivity extends AppCompatActivity {
 
     ActivityTransactionBinding binding;
     private boolean isStatsMode = false;
+    String username;
     private static final int NOTIFICATION_PERMISSION_CODE = 101;
+    private static final int CAMERA_PERMISSION_CODE = 102;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,12 +40,13 @@ public class TransactionActivity extends AppCompatActivity {
         setContentView(binding.getRoot());
 
         SharedPreferences prefs = getSharedPreferences("MyPrefs", MODE_PRIVATE);
-        String username = prefs.getString("username", null);
+        username = prefs.getString("username", null);
 
         setCategories();
         setupBottomNavigation();
         setRewardForUser();
         requestNotificationPermission();
+        requestCameraPermission();
 
         if (username == null) {
             username = getIntent().getStringExtra("username");
@@ -57,8 +60,8 @@ public class TransactionActivity extends AppCompatActivity {
 
         scheduleDailyWork();
 
-        FirebaseNotificationListener listener = new FirebaseNotificationListener(this);
-        listener.startListening(username);
+//        FirebaseNotificationListener listener = new FirebaseNotificationListener(this);
+//        listener.startListening(username);
 
         if (savedInstanceState == null) {
             getSupportFragmentManager().beginTransaction()
@@ -66,9 +69,6 @@ public class TransactionActivity extends AppCompatActivity {
                     .commit();
             binding.navView.setSelectedItemId(R.id.transaction);
         }
-
-
-
     }
 
     private void setupBottomNavigation() {
@@ -79,16 +79,19 @@ public class TransactionActivity extends AppCompatActivity {
                 new AddTransactionFragment().show(getSupportFragmentManager(), null);
                 binding.navView.setSelectedItemId(R.id.transaction);
                 return true;
-            } else if (item.getItemId() == R.id.stats && !isStatsMode) {
-                isStatsMode = true;
+            } else if (item.getItemId() == R.id.stats) {
                 getSupportFragmentManager().beginTransaction()
                         .replace(R.id.fragment_container, new StatsFragment())
                         .commit();
                 return true;
-            } else if (item.getItemId() == R.id.transaction && isStatsMode) {
-                isStatsMode = false;
+            } else if (item.getItemId() == R.id.transaction) {
                 getSupportFragmentManager().beginTransaction()
                         .replace(R.id.fragment_container, new TransactionFragment())
+                        .commit();
+                return true;
+            } else if (item.getItemId() == R.id.account) {
+                getSupportFragmentManager().beginTransaction()
+                        .replace(R.id.fragment_container, new AccountsFragment())
                         .commit();
                 return true;
             } else if (item.getItemId() == R.id.more) {
@@ -112,7 +115,9 @@ public class TransactionActivity extends AppCompatActivity {
                         intent.putExtra("rewards", rewards);
                         intent.putExtra("budget", budget);
                         startActivity(intent);
+                        finish();
                     }
+
                     @Override
                     public void onCancelled(@NonNull DatabaseError error) {
                     }
@@ -122,13 +127,11 @@ public class TransactionActivity extends AppCompatActivity {
         });
     }
 
-    private void setRewardForUser() {
+    public void setRewardForUser() {
         Calendar calendar = Calendar.getInstance();
         int today = calendar.get(Calendar.DAY_OF_MONTH);
         int lastDay = calendar.getActualMaximum(Calendar.DAY_OF_MONTH);
         if (today != lastDay) return;
-
-        String username = getIntent().getStringExtra("username");
 
         DatabaseReference transactionRef = FirebaseDatabase.getInstance().getReference("transactionHistory");
         DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users").child(username);
@@ -162,15 +165,12 @@ public class TransactionActivity extends AppCompatActivity {
                         Integer budget = userSnap.child("budget").getValue(Integer.class);
                         Integer rewards = userSnap.child("rewards").getValue(Integer.class);
                         if (budget == null || rewards == null) return;
-
                         int updatedRewards = rewards;
-
                         if (amountSum[0] > budget) {
-                            updatedRewards += 100;
-                        } else if (amountSum[0] < budget && rewards > 0) {
                             updatedRewards -= 50;
+                        } else if (amountSum[0] < budget && rewards > 0) {
+                            updatedRewards += 100;
                         }
-
                         userRef.child("rewards").setValue(updatedRewards);
                     }
 
@@ -230,6 +230,15 @@ public class TransactionActivity extends AppCompatActivity {
         }
     }
 
+    private void requestCameraPermission() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
+                != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.CAMERA},
+                    CAMERA_PERMISSION_CODE);
+        }
+    }
+
     @Override
     public void onRequestPermissionsResult(int requestCode,
                                            @NonNull String[] permissions,
@@ -238,6 +247,10 @@ public class TransactionActivity extends AppCompatActivity {
         if (requestCode == NOTIFICATION_PERMISSION_CODE && grantResults.length > 0) {
             if (grantResults[0] != PackageManager.PERMISSION_GRANTED) {
                 Toast.makeText(this, "Notification permission denied", Toast.LENGTH_SHORT).show();
+            }
+        } else if (requestCode == CAMERA_PERMISSION_CODE && grantResults.length > 0) {
+            if (grantResults[0] != PackageManager.PERMISSION_GRANTED) {
+                Toast.makeText(this, "Camera permission denied", Toast.LENGTH_SHORT).show();
             }
         }
     }

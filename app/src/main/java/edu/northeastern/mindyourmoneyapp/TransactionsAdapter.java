@@ -123,10 +123,6 @@ public class TransactionsAdapter  extends  RecyclerView.Adapter<TransactionsAdap
         }
 
 
-        holder.binding.transactionCategory.setBackgroundTintList(
-                context.getColorStateList(Constants.getAccountsColor(transaction.getAccount()))
-        );
-
         holder.itemView.setOnLongClickListener(view -> {
             AlertDialog deleteDialog = new AlertDialog.Builder(context).create();
             deleteDialog.setTitle("Delete Transaction");

@@ -164,6 +164,7 @@ public class TransactionFragment extends Fragment implements TransactionsAdapter
                 .addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        if (binding == null || getContext() == null) return;
                         ArrayList<Transaction> transactions = new ArrayList<>();
                         for (DataSnapshot transactionSnapshot : snapshot.getChildren()) {
                             Transaction transaction = transactionSnapshot.getValue(Transaction.class);

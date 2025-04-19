@@ -41,7 +41,7 @@ public class ProfileActivity extends AppCompatActivity {
         doneButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                passUserData(2);
+                passUserData(2); finish();
             }
         });
         logoutButton.setOnClickListener(new View.OnClickListener() {
@@ -94,5 +94,18 @@ public class ProfileActivity extends AppCompatActivity {
         intent.putExtra("password", passwordUser);
         intent.putExtra("budget",budget);
         startActivity(intent);
+    }
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        Intent intent = new Intent(ProfileActivity.this,TransactionActivity.class);
+        intent.putExtra("name", nameUser);
+        intent.putExtra("email", emailUser);
+        intent.putExtra("username", userName);
+        intent.putExtra("password", passwordUser);
+        intent.putExtra("budget",budget);
+        startActivity(intent);
+        finish();
     }
 }
