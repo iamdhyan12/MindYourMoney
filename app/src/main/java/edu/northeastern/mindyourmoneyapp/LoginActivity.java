@@ -39,6 +39,7 @@ public class LoginActivity extends AppCompatActivity {
             Intent intent = new Intent(LoginActivity.this, TransactionActivity.class);
             intent.putExtra("username", savedUsername);
             startActivity(intent);
+            finish();
         }
         loginUsername = findViewById(R.id.login_username);
         loginPassword = findViewById(R.id.login_password);
@@ -112,6 +113,7 @@ public class LoginActivity extends AppCompatActivity {
                         intent.putExtra("rewards",rewards);
                         intent.putExtra("budget",budget);
                         startActivity(intent);
+                        finish();
                     } else {
                         loginPassword.setError("Invalid Credentials");
                         loginPassword.requestFocus();

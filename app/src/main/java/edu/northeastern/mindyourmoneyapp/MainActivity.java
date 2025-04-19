@@ -19,7 +19,7 @@ public class MainActivity extends AppCompatActivity {
         checkBatteryOptimization();
         Intent newIntent = new Intent(MainActivity.this, LoginActivity.class);
         startActivity(newIntent);
-
+        finish();
     }
 
     private void checkBatteryOptimization() {
