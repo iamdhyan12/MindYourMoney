@@ -55,6 +55,10 @@ public class TransactionFragment extends Fragment implements TransactionsAdapter
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        if (savedInstanceState != null) {
+            selectedTab = savedInstanceState.getInt("selected_tab", 0);
+        }
+
         mindYourMoneyRef = FirebaseDatabase.getInstance().getReference("transactionHistory");
         calendar = Calendar.getInstance();
 
@@ -212,5 +216,10 @@ public class TransactionFragment extends Fragment implements TransactionsAdapter
     public void onDestroyView() {
         super.onDestroyView();
         binding = null;
+    }
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putInt("selected_tab", selectedTab);
     }
 }

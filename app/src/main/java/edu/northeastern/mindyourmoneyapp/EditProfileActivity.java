@@ -121,10 +121,8 @@ public class EditProfileActivity extends AppCompatActivity {
         }
     }
     public boolean isBudgetChanged(){
-        Toast.makeText(EditProfileActivity.this,"here start",Toast.LENGTH_LONG).show();
         String budgetStr = editBudget.getText().toString();
         int budget = Integer.parseInt(budgetStr);
-        Toast.makeText(EditProfileActivity.this,"here 1",Toast.LENGTH_LONG).show();
         if (budgetUser != budget){
             reference.child(usernameUser).child("budget").setValue(budget);
             budgetUser = budget;
