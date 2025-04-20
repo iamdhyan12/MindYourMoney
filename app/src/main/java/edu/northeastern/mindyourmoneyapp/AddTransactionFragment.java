@@ -63,8 +63,6 @@ public class AddTransactionFragment extends BottomSheetDialogFragment {
 
     FragmentAddTransactionBinding binding;
     private DatabaseReference mindYourMoneyRef;
-
-    String username;
     private static final int REQUEST_CODE_CAMERA_PERMISSION = 101;
     private static final int REQUEST_CODE_CAMERA = 102;
     private Uri capturedImageUri = null;
@@ -108,10 +106,6 @@ public class AddTransactionFragment extends BottomSheetDialogFragment {
                 launchCamera();
             }
         });
-
-
-
-
 
         binding.category.setOnClickListener(c-> {
             ListDialogBinding dialogBinding = ListDialogBinding.inflate(inflater);

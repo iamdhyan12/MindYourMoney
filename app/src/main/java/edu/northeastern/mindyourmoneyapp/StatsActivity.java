@@ -31,7 +31,7 @@ public class StatsActivity extends AppCompatActivity {
     ActivityStatsBinding binding;
     Calendar calendar;
     int selectedTab = 0;
-    int selectedType = 0; // 0 for category, 1 for payment mode
+    int selectedType = 0;
     String currentDisplayDate;
     private DatabaseReference mindYourMoneyRef;
     private WebView chartWebView;
@@ -45,11 +45,10 @@ public class StatsActivity extends AppCompatActivity {
         mindYourMoneyRef = FirebaseDatabase.getInstance().getReference("transactionHistory");
         calendar = Calendar.getInstance();
 
-        // Initialize WebView
+
         chartWebView = binding.chartWebView;
         chartWebView.getSettings().setJavaScriptEnabled(true);
 
-        // Initialize UI state
         selectedType = 0;
         selectedTab = 0;
         updateButtonState();

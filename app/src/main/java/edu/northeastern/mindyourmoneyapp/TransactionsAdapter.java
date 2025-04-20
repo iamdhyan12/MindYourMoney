@@ -51,44 +51,6 @@ public class TransactionsAdapter  extends  RecyclerView.Adapter<TransactionsAdap
         return new TransactionViewHolder(LayoutInflater.from(context).inflate(R.layout.row_transaction, parent, false));
     }
 
-//    @Override
-//    public void onBindViewHolder(@NonNull TransactionViewHolder holder, int position) {
-//        Transaction transaction = transactions.get(position);
-//
-//        holder.binding.transactionAmount.setText(String.valueOf(transaction.getAmount()));
-//        holder.binding.transactionCategory.setText(transaction.getAccount());
-//        SimpleDateFormat format = new SimpleDateFormat("MMMM dd, YYYY");
-//        holder.binding.transactionDate.setText(transaction.getDate());
-//        holder.binding.category.setText(transaction.getCategory());
-//
-//        Category transactionCategory = Constants.getCategoryDetails(transaction.getCategory());
-//
-//        holder.binding.categoryIcon.setImageResource(transactionCategory.getCategoryImage());
-//        holder.binding.categoryIcon.setBackgroundTintList(context.getColorStateList(transactionCategory.getCategoryColor()));
-//
-//        holder.binding.transactionCategory.setBackgroundTintList(context.getColorStateList(Constants.getAccountsColor(transaction.getAccount())));
-//
-//
-//        holder.itemView.setOnLongClickListener(new View.OnLongClickListener() {
-//            @Override
-//            public boolean onLongClick(View view) {
-//                AlertDialog deleteDialog = new AlertDialog.Builder(context).create();
-//                deleteDialog.setTitle("Delete Transaction");
-//                deleteDialog.setMessage("Are you sure to delete this transaction?");
-//                deleteDialog.setButton(DialogInterface.BUTTON_POSITIVE, "Yes", (dialogInterface, i) -> {
-//                    deleteTransaction(transaction);
-//
-//                });
-//                deleteDialog.setButton(DialogInterface.BUTTON_NEGATIVE, "No", (dialogInterface, i) -> {
-//                    deleteDialog.dismiss();
-//                });
-//                deleteDialog.show();
-//                return false;
-//            }
-//        });
-//
-//    }
-
     @Override
     public void onBindViewHolder(@NonNull TransactionViewHolder holder, int position) {
         Transaction transaction = transactions.get(position);

@@ -39,7 +39,7 @@ public class StatsFragment extends Fragment {
     private DatabaseReference mindYourMoneyRef;
     private Calendar calendar;
     private int selectedTab = 0;
-    private int selectedType = 0; // 0 for category, 1 for payment mode
+    private int selectedType = 0;
     private String currentDisplayDate;
     private WebView chartWebView;
 

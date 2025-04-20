@@ -61,8 +61,6 @@ public class TransactionActivity extends AppCompatActivity {
 
         scheduleDailyWork();
 
-//        FirebaseNotificationListener listener = new FirebaseNotificationListener(this);
-//        listener.startListening(username);
 
         if (savedInstanceState == null) {
             getSupportFragmentManager().beginTransaction()

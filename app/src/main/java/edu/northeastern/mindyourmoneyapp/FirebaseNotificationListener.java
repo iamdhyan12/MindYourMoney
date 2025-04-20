@@ -53,7 +53,6 @@ public class FirebaseNotificationListener {
                                             }
                                         }
 
-                                        // Step 2: Compare with user's budget
                                         DatabaseReference userRef = FirebaseDatabase.getInstance().getReference("users").child(username);
                                         double finalTotalSum = totalSum;
                                         userRef.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -92,7 +91,6 @@ public class FirebaseNotificationListener {
             manager.createNotificationChannel(channel);
         }
 
-        // Open app when user taps the notification
         Intent intent = new Intent(context, TransactionActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         PendingIntent pendingIntent = PendingIntent.getActivity(
