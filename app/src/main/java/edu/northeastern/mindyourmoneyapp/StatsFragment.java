@@ -58,7 +58,10 @@ public class StatsFragment extends Fragment {
 
         if (savedInstanceState != null) {
             selectedTab = savedInstanceState.getInt("selected_tab", 0);
+            selectedType = savedInstanceState.getInt("selected_type", 0);
         }
+
+        updateButtonState()St
 
         mindYourMoneyRef = FirebaseDatabase.getInstance().getReference("transactionHistory");
         calendar = Calendar.getInstance();
@@ -71,9 +74,7 @@ public class StatsFragment extends Fragment {
         SharedPreferences prefs = getActivity().getSharedPreferences("MyPrefs", MODE_PRIVATE);
         username = prefs.getString("username", null);
 
-        selectedType = 0;
-        selectedTab = 0;
-        updateButtonState();
+
 
         setupDateNavigation();
         setupTypeSelection();
@@ -308,6 +309,7 @@ public class StatsFragment extends Fragment {
     public void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putInt("selected_tab", selectedTab);
+        outState.putInt("selected_type", selectedType);
     }
 
 }

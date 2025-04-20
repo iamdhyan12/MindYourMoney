@@ -17,6 +17,7 @@ import java.util.Locale;
 
 public class FirebaseNotificationListener {
     private final Context context;
+    int notificationId = 101;
     public FirebaseNotificationListener(Context context) {
         this.context = context;
     }
@@ -104,6 +105,6 @@ public class FirebaseNotificationListener {
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setContentIntent(pendingIntent);
 
-        manager.notify((int) System.currentTimeMillis(), builder.build());
+        manager.notify(notificationId, builder.build());
     }
 }
