@@ -61,7 +61,7 @@ public class StatsFragment extends Fragment {
             selectedType = savedInstanceState.getInt("selected_type", 0);
         }
 
-        updateButtonState()St
+        updateButtonState();
 
         mindYourMoneyRef = FirebaseDatabase.getInstance().getReference("transactionHistory");
         calendar = Calendar.getInstance();
